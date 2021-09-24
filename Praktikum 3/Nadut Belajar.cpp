@@ -1,0 +1,236 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+using namespace std;
+
+struct AVLNode {
+    int data;
+    AVLNode *left, *right;
+    int height;
+};
+
+struct AVL
+{
+    AVLNode *_root;
+    unsigned _size;
+private:
+
+    AVLNode* _avl_createNode(int value) {
+        AVLNode *newNode = (AVLNode*) malloc(sizeof(AVLNode));
+        newNode->data = value;
+        newNode->height =1;
+        newNode->left = newNode->right = NULL;
+        return newNode;
+    }
+
+    AVLNode* _search(AVLNode *root, int value) {
+        while (root != NULL) {
+            if (value < root->data)
+                root = root->left;
+            else if (value > root->data)
+                root = root->right;
+            else
+                return root;
+        }
+        return root;
+    }
+
+    int _getHeight(AVLNode* node){
+        if(node==NULL)
+            return 0; 
+        return node->height;
+    }
+
+    int _max(int a,int b){
+        return (a > b)? a : b;
+    }
+
+    AVLNode* _rightRotate(AVLNode* pivotNode){
+        AVLNode* newParrent=pivotNode->left;
+        pivotNode->left=newParrent->right;
+        newParrent->right=pivotNode;
+
+        pivotNode->height=_max(_getHeight(pivotNode->left),
+                        _getHeight(pivotNode->right))+1;
+        newParrent->height=_max(_getHeight(newParrent->left),
+                        _getHeight(newParrent->right))+1;
+        
+        return newParrent;
+    }
+
+    AVLNode* _leftRotate(AVLNode* pivotNode) {
+        AVLNode* newParrent=pivotNode->right;
+        pivotNode->right=newParrent->left;
+        newParrent->left=pivotNode;
+
+        pivotNode->height=_max(_getHeight(pivotNode->left),
+                        _getHeight(pivotNode->right))+1;
+        newParrent->height=_max(_getHeight(newParrent->left),
+                        _getHeight(newParrent->right))+1;
+        
+        return newParrent;
+    }
+
+    AVLNode* _leftCaseRotate(AVLNode* node){
+        return _rightRotate(node);
+    }
+
+    AVLNode* _rightCaseRotate(AVLNode* node){
+        return _leftRotate(node);
+    }
+
+    AVLNode* _leftRightCaseRotate(AVLNode* node){
+        node->left=_leftRotate(node->left);
+        return _rightRotate(node);
+    }
+
+    AVLNode* _rightLeftCaseRotate(AVLNode* node){
+        node->right=_rightRotate(node->right);
+        return _leftRotate(node);
+    }
+
+    int _getBalanceFactor(AVLNode* node){
+        if(node==NULL)
+            return 0;
+        return _getHeight(node->left)-_getHeight(node->right);
+    }
+
+    AVLNode* _insert_AVL(AVLNode* node,int value) {
+        
+        if(node==NULL)
+            return _avl_createNode(value);
+        if(value < node->data)
+            node->left = _insert_AVL(node->left,value);
+        else if(value > node->data)
+            node->right = _insert_AVL(node->right,value);
+        
+        node->height= 1 + _max(_getHeight(node->left),_getHeight(node->right)); 
+
+        int balanceFactor=_getBalanceFactor(node);
+        
+        if(balanceFactor > 1 && value < node->left->data)
+            return _leftCaseRotate(node);
+        if(balanceFactor > 1 && value > node->left->data)
+            return _leftRightCaseRotate(node);
+        if(balanceFactor < -1 && value > node->right->data)
+            return _rightCaseRotate(node);
+        if(balanceFactor < -1 && value < node->right->data)
+            return _rightLeftCaseRotate(node);
+        
+        return node;
+    }
+
+public:
+    void init() {
+        _root = NULL;
+        _size = 0U;
+    }
+
+    bool isEmpty() {
+        return _root == NULL;
+    }
+
+    bool find(int value) {
+        AVLNode *temp = _search(_root, value);
+        if (temp == NULL)
+            return false;
+        
+        if (temp->data == value) return true;
+        else return false;
+    }
+
+    void insert(int value) {
+        if (!find(value)) {
+            _root = _insert_AVL(_root, value);
+            _size++;
+        }
+    }
+};
+
+int hasil;
+void findParent(AVLNode* node, int val, int parent){
+    if (node == NULL)
+        return;
+
+    if (node->data == val){
+        hasil = parent;
+        return;
+    }
+    else{
+        findParent(node->left, val, node->data);
+        findParent(node->right, val, node->data);       
+    }
+}
+
+void HasilSibling(AVLNode *root, int value){
+    if (root==NULL) return;
+    
+    if (root->data==value){
+        if (root->left && root->right){
+            int left = root->left->data;
+            int right = root->right->data;
+            if (left > right){
+                cout << left-right << endl;
+            }
+            else{
+                cout << right-left << endl;
+            }
+        }
+        else if (root->left){
+            cout << root->left->data << endl;
+        }
+        else if (root->right){
+            cout << root->right->data << endl;
+        }
+    }
+    else{
+        if (root->data > value){
+            HasilSibling(root->left, value);
+        }
+        else if (root->data < value){
+            HasilSibling(root->right, value);
+        }
+    }
+}
+
+void Sibling(AVLNode *node, int value){
+    if (node->data != value){
+
+        findParent(node, value, node->data);
+        
+        if (hasil == node->data){
+            cout << hasil << endl;
+        }
+        else{
+            findParent(node, hasil, node->data);
+            HasilSibling(node, hasil);
+        }
+    }
+    else{
+        cout << "0" << endl;
+        return;
+    }
+}
+
+int main()
+{
+    AVL set;
+    set.init();
+
+    int Q, q, T, X;
+    cin >> Q >> T;
+    for (int i=0; i<Q; i++){
+        cin >> q;
+        set.insert(q);
+    }
+    for (int i=0; i<T; i++){
+        cin >> X;
+        if (set.find(X) == true){
+            Sibling(set._root, X);
+        }
+        else{
+            cout << "0" << endl;
+        }
+    }
+    return 0;
+}
